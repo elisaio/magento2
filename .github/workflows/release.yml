@@ -1,0 +1,85 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: magento-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate extension version
+        id: version
+        shell: bash
+        run: |
+          node <<'NODE'
+          const { readFileSync, appendFileSync } = require('node:fs');
+          const { execFileSync } = require('node:child_process');
+          const { version } = JSON.parse(readFileSync('composer.json', 'utf8'));
+          const moduleConfig = readFileSync('etc/di.xml', 'utf8');
+          const extensionVersion = moduleConfig.match(/<item name="extension" xsi:type="string">([^<]+)<\/item>/)?.[1];
+          const stableVersion = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/;
+          if (!stableVersion.test(version) || version !== extensionVersion) {
+            throw new Error('composer.json and etc/di.xml must contain the same stable X.Y.Z extension version.');
+          }
+          const tags = execFileSync('git', ['tag', '--list'], { encoding: 'utf8' }).trim().split('\n');
+          const tagged = tags.includes(version);
+          if (tagged) {
+            // Existing releases remain attached to their original commit.
+            execFileSync('git', ['merge-base', '--is-ancestor', `refs/tags/${version}`, 'HEAD']);
+          } else {
+            const parts = version.split('.').map(BigInt);
+            const newerThan = (tag) => {
+              const previous = tag.split('.').map(BigInt);
+              const different = parts.findIndex((part, index) => part !== previous[index]);
+              return different !== -1 && parts[different] > previous[different];
+            };
+            if (tags.filter((tag) => stableVersion.test(tag)).some((tag) => !newerThan(tag))) {
+              throw new Error('The new extension version must be higher than every existing stable tag.');
+            }
+          }
+          appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\ntagged=${tagged}\n`);
+          NODE
+
+      - name: Check for an existing release
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh api --paginate "repos/$GITHUB_REPOSITORY/releases" --jq '.[].tag_name' > "$RUNNER_TEMP/release-tags"
+          if grep -Fxq "$VERSION" "$RUNNER_TEMP/release-tags"; then
+            echo 'exists=true' >> "$GITHUB_OUTPUT"
+            echo "Release $VERSION already exists; no publishing needed." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Push the version tag
+        if: steps.existing.outputs.exists != 'true' && steps.version.outputs.tagged != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git tag "$VERSION" "$GITHUB_SHA"
+          git push origin "refs/tags/$VERSION"
+
+      - name: Publish GitHub release
+        if: steps.existing.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "$VERSION" --repo "$GITHUB_REPOSITORY" --verify-tag --title "$VERSION" --generate-notes
+          echo "Published [$VERSION](https://github.com/$GITHUB_REPOSITORY/releases/tag/$VERSION). Packagist is notified by the repository push webhook." >> "$GITHUB_STEP_SUMMARY"
