@@ -51,21 +51,28 @@ class OrderManagement implements OrderManagementInterface
     {
         $ordersCollection = $this->ordersCollectionFactory->create();
 
-        $ordersCollection->getSelect()->joinLeft(
+        // A quote gets one link per applied cart request, and each request replaces the quote items.
+        // The latest link is therefore the cart request the order was placed from.
+        $latestLinkSelect = $ordersCollection->getConnection()->select()
+            ->from(['latest' => 'elisa_productsapi_cartrequest_to_quote'], [new \Zend_Db_Expr('MAX(latest.id)')])
+            ->where('latest.quote_id = main_table.quote_id');
+
+        $ordersCollection->getSelect()->joinInner(
             ['crq' => 'elisa_productsapi_cartrequest_to_quote'],
-            "main_table.quote_id = crq.quote_id"
+            "crq.id = (" . $latestLinkSelect . ")",
+            []
         );
 
         $ordersCollection->getSelect()->joinLeft(
             ['cr' => 'elisa_productsapi_cartrequest'],
-            "crq.ref_id = cr.id"
+            "crq.ref_id = cr.id",
+            ['ref_id' => 'cr.ref_id']
         );
 
         $updatedAt = date("Y-m-d H:i:s", $timestamp ?: 0);
 
         $ordersCollection->addFieldToFilter('updated_at', ['gt' => $updatedAt]);
         $ordersCollection->addFieldToFilter('crq.ref_id', ['notnull' => true]);
-        $ordersCollection->getSelect()->group('main_table.entity_id');
 
         /** @var \Magento\Sales\Api\Data\OrderInterface[] $orders */
         $orders = $ordersCollection->getItems();
