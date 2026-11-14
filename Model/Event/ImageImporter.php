@@ -124,6 +124,9 @@ class ImageImporter
         try {
             $uri = \Laminas\Uri\UriFactory::factory($imageUrl);
         } catch (\Throwable $e) {
+            if (!class_exists(\Zend\Uri\UriFactory::class)) {
+                throw $e;
+            }
             $uri = \Zend\Uri\UriFactory::factory($imageUrl);
         }
 
