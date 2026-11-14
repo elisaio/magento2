@@ -10,7 +10,7 @@ class ElisaException extends LocalizedException
     /**
      * @inheritDoc
      */
-    public function __construct(Phrase $phrase = null, ?\Throwable $cause = null, int $code = 0)
+    public function __construct(?Phrase $phrase = null, ?\Throwable $cause = null, int $code = 0)
     {
         parent::__construct(
             $phrase,
