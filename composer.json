@@ -2,7 +2,7 @@
   "name": "elisa/product_api",
   "description": "Integrate Elisa.io with magento",
   "type": "magento2-module",
-  "version": "2.6.3",
+  "version": "2.7.0",
   "license": [
     "OSL-3.0",
     "AFL-3.0"

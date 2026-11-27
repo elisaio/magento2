@@ -76,7 +76,8 @@ class Basic implements ProductDataBuilderInterface
                     $product,
                     $product->getName()
                 )
-            )->setPrice($product->getFinalPrice())
+            )->setDescription((string)$product->getData('description'))
+            ->setPrice($product->getFinalPrice())
             ->setSuggestedRetailPrice(
                 (float)$this->getElisaProductFieldData(
                     MappableProductDataFields::FIELD_RECOMMENDED_RETAIL_PRICE,

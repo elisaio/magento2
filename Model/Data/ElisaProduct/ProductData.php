@@ -10,6 +10,7 @@ class ProductData extends DataObject implements ProductDataInterface
 {
     private const KEY_CONFIGURABLE_OPTIONS = 'configurable_options';
     private const KEY_CONFIGURABLE_SETUP = 'configurable_setup';
+    private const KEY_DESCRIPTION = 'description';
     private const KEY_ENTITY_ID = 'entity_id';
     private const KEY_MAIN_IMAGE = 'main_image';
     private const KEY_NAME = 'name';
@@ -38,6 +39,14 @@ class ProductData extends DataObject implements ProductDataInterface
     public function getConfigurableSetup(): ?ConfigurableSetupInterface
     {
         return $this->getData(self::KEY_CONFIGURABLE_SETUP);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getDescription(): string
+    {
+        return (string)$this->getData(self::KEY_DESCRIPTION);
     }
 
     /**
@@ -158,6 +167,14 @@ class ProductData extends DataObject implements ProductDataInterface
     public function setConfigurableSetup(ConfigurableSetupInterface $value): ProductDataInterface
     {
         return $this->setData(self::KEY_CONFIGURABLE_SETUP, $value);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function setDescription(string $value): ProductDataInterface
+    {
+        return $this->setData(self::KEY_DESCRIPTION, $value);
     }
 
     /**
