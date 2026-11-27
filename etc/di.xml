@@ -160,9 +160,9 @@
             <argument name="data" xsi:type="array">
                 <item name="cart_api" xsi:type="string">1.0.0</item>
                 <item name="events_api" xsi:type="string">1.0.0</item>
-                <item name="extension" xsi:type="string">2.6.3</item>
+                <item name="extension" xsi:type="string">2.7.0</item>
                 <item name="order_api" xsi:type="string">1.1.1</item>
-                <item name="product_api" xsi:type="string">1.0.1</item>
+                <item name="product_api" xsi:type="string">1.1.0</item>
             </argument>
         </arguments>
     </virtualType>

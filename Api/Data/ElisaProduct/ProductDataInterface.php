@@ -26,6 +26,13 @@ interface ProductDataInterface
     public function getConfigurableSetup(): ?ConfigurableSetupInterface;
 
     /**
+     * Get Description
+     *
+     * @return string Description of product
+     */
+    public function getDescription(): string;
+
+    /**
      * Get Entity ID
      *
      * @return int Entity ID of product
@@ -131,6 +138,14 @@ interface ProductDataInterface
      * @return ProductDataInterface
      */
     public function setConfigurableSetup(ConfigurableSetupInterface $value): ProductDataInterface;
+
+    /**
+     * Set Description
+     *
+     * @param string $value
+     * @return ProductDataInterface
+     */
+    public function setDescription(string $value): ProductDataInterface;
 
     /**
      * Set Entity ID
